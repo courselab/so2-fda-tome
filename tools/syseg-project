@@ -1,0 +1,394 @@
+#!/usr/bin/env bash
+
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+
+function usage()
+{
+    echo "Usage: $(basename $0) [options] <path>"
+}
+
+
+function help()
+{
+    usage
+    echo
+    echo "       options:"
+    echo
+    echo "       -h              outpu this help message and quits"
+    echo "       -v              output version and exit"
+    echo "       -u              update an existing project"
+    echo
+}
+
+ORIGIN=$(dirname "$0")
+SRC=$(cat $ORIGIN/../.srcdir)
+
+
+
+overwrite=0
+while getopts "vhu" opt; do
+    case $opt in
+	h)
+	    help
+	    exit 0
+	    ;;
+	v)
+	    cat $ORIGIN/../.version
+	    exit 0
+	    ;;
+	u)
+	    update="y"
+	    ;;
+    esac
+done
+shift "$(($OPTIND -1))"
+
+FILEPATH="${1%*/}"
+
+if test -z "$FILEPATH"; then
+    usage
+    exit 1
+fi
+
+for f in reuse syseg-reuse syseg-export syseg-newfile syseg-project; do
+    if ! test -f $HOME/.syseg/bin/$f; then
+	echo "SYSeg not properly installed (see doc/syseg.md)"
+	echo "Aborted."
+	exit 1
+    fi
+done
+
+if ! test -d $FILEPATH; then
+    mkdir $FILEPATH
+else
+    if test "${update^^}" != "Y"; then
+    echo "Directory already exists: $FILEPATH"
+    echo "Use option -u to update an existing project."
+    exit 1
+    fi
+fi
+
+ORIGIN=$(dirname "$0")
+REUSE_PATH=$HOME/.syseg/bin
+
+#
+# Try to detect author, email and year from Git config.
+# 
+
+AUTHOR="$(git config user.name)"
+EMAIL="$(git config user.email)"
+LICENSE="GPL-3.0-or-later"
+YEAR="$(date +%Y)"
+
+echo "Author info inferred from Git configuration"
+
+
+current_dir=$(pwd)
+cd $FILEPATH && REPO=$(git config remote.origin.url)
+cd $current_dir
+
+
+if test "${REPO%@*}" == "git"; then
+    echo "Inferring url from remote (ssh)"
+    URL="https://"$(echo "${REPO#git@*}" | sed 's/:/\//')
+elif test "${REPO%://*}" == "https"; then
+    echo "Path seems a Git repository; inferring url from remote (https)"
+    URL=$REPO
+else
+    echo "Path does not seem a Git repository; cannot infer url automatically"
+    echo -n "Please, enter the projct URL manually, if any: "
+    read URL
+    test -z "$URL" && URL="<Fill in project URL>"
+fi
+     
+
+##
+## Add AUTHOR file
+##
+
+if ! test -f $FILEPATH/AUTHOR; then
+    echo "Creating $FILEPATH/AUTHOR"
+    
+    cat<<EOF > $FILEPATH/AUTHOR
+
+ AUTHORS
+ ------------------------------
+
+ <AUTHOR> <EMAIL>
+
+ Attribution
+ ------------------------------
+ This project is a programming exercise based on SYSeg learning material.
+ SYSeg is accessible at: https://gitlab.com/monaco/syseg-template.
+
+EOF
+
+
+    sed -i "s/<AUTHOR>/$AUTHOR/" $FILEPATH/AUTHOR
+    sed -i "s/<EMAIL>/<$EMAIL>/" $FILEPATH/AUTHOR
+
+
+    $REUSE_PATH/reuse annotate --copyright="$AUTHOR" --year="$YEAR" --license="CC-BY-ND-4.0" --template=syseg-newfile --style=python $FILEPATH/AUTHOR #> /dev/null
+
+    
+else
+    echo "Skipping $FILEPATH/AUTHOR"
+fi
+
+##
+## Add README
+##
+
+if ! test -f "$FILEPATH/README.md"; then
+    echo "Creating $FILEPATH/README.md"
+    cat<<EOF > $FILEPATH/README.md
+
+ This is free software distributed under the terms of the GNU General Public 
+ License version 3 of the license or, at your discretion, any later version. 
+ See section 'Licensing' bellow for further information._
+
+ About
+ ==============================
+
+ This project aims to solve implementation challenges included in the in 
+ the SYSeg project (a sysetm-software larning resource). Each individual 
+ programming exercise is developed within its own subdirectory, which 
+ contains the respective problem specification and the resolution attempt.
+
+ Overview
+ ------------------------------
+
+ <!-- Delete this comment:
+
+   * Extend this content with information about your awesome project.
+
+   * See .tools/readme.md for detailed instructions.
+
+ -->
+
+ Licensing
+ -----------------------------
+ 
+ This project is free software and can be distributed under the terms of GNU 
+ General Public License version 3 of the license or, at your discretion, any
+ later version. 
+
+ Third-party source files distributed along with SYSeg are made covered by 
+ their respective licenses, as annotated in each individual file.
+
+ See the terms of each license under the directory LICENSES. 
+
+EOF
+
+    sed -i "s/<AUTHOR>/$AUTHOR/" $FILEPATH/README.md
+    sed -i "s/<EMAIL>/<$EMAIL>/" $FILEPATH/README.md
+    
+    $REUSE_PATH/reuse annotate --copyright="$AUTHOR" --year="$YEAR" --license="$LICENSE" --template=syseg-export --style=python $FILEPATH/README.md #> /dev/null
+
+    sed -i "s/<CONTRIBUTOR>/$AUTHOR <$EMAIL>/" $FILEPATH/README.md
+    
+    
+else
+    echo "Skipping $FILEPATH/README.md"
+fi
+
+##
+## Add exercise directions
+##
+
+mkdir -p $FILEPATH/.tools
+
+echo "Creating $FILEPATH/.tools/readme.md"
+cat<<EOF > $FILEPATH/.tools/readme.md
+ 
+ Directions for the exercise.
+ ------------------------------
+
+ TL;DR
+
+ * \`syseg-newfile\`    creates a new file in your project
+ * \`syseg-export\`     copy a source file from SYSeg into your project
+ * \`syseg-reuse\`      annotate copyright and license information
+
+ Use option \`-h\` for help.
+
+ DETAILED INSTRUCTIONS
+
+ For the sake of simplicity, let's say that the environment variables \$SYSEG
+ and \$PROJ contain the paths to SYSeg and to you project, respectively.
+
+ * This project was created using the SYSeg facilities designed specially for 
+   this purpose. That procedure must have created your project directory and
+   populated it with some bootstrap code that you are supposed to build upon.
+   
+   It should also have copied some auxiliary programs under the subdirectory
+
+   \`\$PROJ/.tools\`
+   
+   There you may find scripts that you should use to create new files, copy 
+   source code from SYSeg, check your copyright and licensing information etc.
+
+   You should always perform those tasks using the provided scripts so as to
+   keep your project consistent with SYSeg specifications. That is important
+   should you or your instructor decide to use SYSeg analysis tools. 
+
+   In order to use the auxiliary scripts described in this file, you must have
+   SYSeg installed in your computer. This means that, in addition to building
+   SYSeg, you must have performed the \`make install\` step, as described in 
+   \`\$SYSEG/doc/syseg.md\`.
+
+
+ * If you want to create a new file, use the proper script
+
+   \`\$PROJ/.tools/syseg-newfile <destination-path>/<file-name>\`
+
+   The script should create the file, add some comments and, possibly, some 
+   boilerplate code based on the file type (i.e. the file-name extension).
+
+   Remember, you must have SYSeg installed (\`make install\`).
+	       
+ * SYSeg is free software and you may reuse its source code.
+
+   Do not manually copy files from SYSeg source tree into your project's 
+   directory. Instead, should you decide to reuse some SYSeg file in your
+   programming exercise, use the script \`syseg-export\` like this
+
+   \`\`\`
+   \$ cd \$PROJ
+   \$ .tools/syseg-export \$SYSEG/<path-to-file> ./<destination-path>
+   \`\`\`
+   The script will export the source file to the destination path, perform 
+   necessary adjustments and annotate the copyright notice properly. 
+
+   If your project has other authors besides you, you are expected to update
+   the copyright information as described bellow.
+
+ * If you have a co-author and they have a copy of the project in their own
+   computer, they can easily update the copyright notice by issuing the
+   following command
+ 
+   \`\`\`
+   \$ cd \$PROJ
+   \$ .tools/syseg-reuse <path-to-file>
+   \`\`\`
+
+   on their own computer. The script should resolve your co-author's name and
+   the current year automatically (the script uses git config for that purpose).
+
+   Alternatively, if you are to update the copyright info on behalf of your
+   co-author, instead, you may run this command in your own computer
+
+   \`\`\`
+   \$ cd \$PROJ
+   \$ .tools/syseg-reuse -c <coauthor-name> -y \$(date +%Y) <destination-path>/<file-name>
+   \`\`\`
+
+ * If you want to distribute your project under a different license that that
+   of SYSeg, you may do so, as long as your other license does not conflict 
+   with the terms of the original SYSeg license (if unsure, stick with the
+   license).
+
+   To add a license:
+
+   \`\`\`
+   \$ .tools/syseg-reuse -l <alternative-valid-SPDX-license>
+   \`\`\`
+
+   Your license should also be added to the directory \$PROJ/LICENSES. Run the
+   following command to get it done automatically:
+
+   \`\`\`
+   \$ .tools/syseg-reuse -d
+   \`\`\`
+
+EOF
+
+
+$ORIGIN/syseg-reuse $FILEPATH/.tools/readme.md > /dev/null
+
+##
+## Add auxiliary tools
+##
+
+
+function add_link()
+{
+    echo "Creating $FILEPATH/.tools/$1"
+    if ! test -f $FILEPATH/.tools/$1; then
+	ln -s $HOME/.syseg/bin/$1 $FILEPATH/.tools/$1
+    fi
+}
+
+add_link syseg-newfile
+add_link syseg-reuse
+add_link syseg-export
+add_link syseg-project
+add_link reuse
+
+echo "Creating $FILEPATH/.reuse"
+
+test ! -d $FILEPATH/.reuse && cp -r $SRC/.reuse $FILEPATH
+
+# cd $FILEPATH && REPO=$(git config remote.origin.url | sed 's/:/\//' | sed 's/git@/https:\/\//'  )
+
+
+cat<<EOF > $FILEPATH/.reuse/dep5
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: $(basename $FILEPATH)
+Upstream-Contact: $AUTHOR <$EMAIL>
+Source: $URL
+
+Files: */.dist
+Copyright: $AUTHOR <$EMAIL>
+License: CC0-1.0
+
+EOF
+
+
+
+
+# Update licenses and lint-check
+
+echo "Updating license information"
+cd $FILEPATH && .tools/reuse download --all
+
+
+cat<<EOF
+
+Project successfully configure at $FILEPATH.
+
+Upstream-Name:    $(basename $FILEPATH)
+Upstream-Contact: $AUTHOR <$EMAIL>
+Source:           $URL
+
+Check the information above and edit '$FILEPATH/.reuse/deb5' if necessary.
+
+Before starting with the project, please read the contents of the file
+
+  $FILEPATH/.tools/readme.md
+
+which, contains important directions that you should follow in order to ensure
+that the directory can be handled by the SYSeg automatic evaluation tools.
+
+EOF
+
+
+# Check REUSE compliance
+
+cd $FILEPATH && $HOME/.syseg/bin/reuse lint > /dev/null
+if test $? -ne 0; then
+    echo
+    echo "WARNING: Failed to pass REUSE compliance check."
+    echo "         Run 'tools/syseg-reuse' -L from within $FILEPATH to identify"
+    echo "         the problem(s), and perform the applicable changes."
+    exit 1
+fi
+
+# Copy .srcdir and .version files
+
+cp $SRC/.srcdir $SRC/.version $FILEPATH

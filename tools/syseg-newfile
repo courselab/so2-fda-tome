@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+
+function usage()
+{
+    echo "Usage: $(basename $0) [options] <file name>"
+}
+
+
+function help()
+{
+    usage
+    echo
+    echo "       options:"
+    echo
+    echo "       -f              pass extra options to reuse-tool"
+    echo "       -h              outpu this help message and quits"
+    echo "       -v              output version and exit"
+    echo
+}
+
+ORIGIN=$(dirname "$0")
+
+template="syseg-newfile"
+
+# Default to syseg template if the script is invoked from SYSeg source tree,
+# unless option -c is used.
+if test -f $ORIGIN/../.srcdir; then
+    template="syseg"
+fi
+
+overwrite=0
+while getopts "vhfsc" opt; do
+    case $opt in
+	h)
+	    help
+	    exit 0
+	    ;;
+	v)
+	    cat $ORIGIN/../.version
+	    exit 0
+	    ;;
+	f)
+	    overwrite=1;
+	    ;;
+	s)
+	    # This option is intentionally undocummented.
+	    # -s forces syseg template.
+	    template="syseg"
+	    echo "New SYSeg source file"
+	    ;;
+	c)
+	    # This option is intentionally undocummented.
+	    # -c forces syseg-newfile template (overrides -s)
+	    template="syseg-newfile"
+	    ;;
+    esac
+done
+shift "$(($OPTIND -1))"
+
+FILEPATH=$1
+if test -z "$FILEPATH"; then
+    usage
+    exit 1
+fi
+
+BASENAME=$(basename "$FILEPATH")
+
+
+if test $overwrite -eq 0 && test -f $FILEPATH ; then
+    echo "File already exists: $FILEPATH. Aborted."
+    echo "use option -f to force overwrite."
+   exit 1
+fi
+
+
+case $BASENAME in
+
+    *.h)
+ 	macro=${BASENAME^^}
+ 	macro=${macro/./_}
+	echo "#ifndef $macro" > $FILEPATH
+	echo "#define $macro" >> $FILEPATH
+	echo "" >> $FILEPATH
+	echo "#endif  /* $macro  */" >> $FILEPATH
+	;;
+
+    Makefile.m4)
+	cat<<EOF > $FILEPATH
+include(docm4.m4)dnl
+
+## Makefile automation rules.
+##
+## SYSeg creates and automatically updates this Makefile from the source 
+## Makefile.m4 template, so as to reflect changes in the project's design
+## and auxiliary resources. The next rules serve this purpose and are not 
+## relevant for the code examples in this directory.
+
+init: all 
+
+DOCM4_UPDATE
+
+## Relevant rules for the code examples in this directory.
+## 
+## The following rules are part of the relevant content of this directory.
+## They are meant both as a convenience for building the code examples and
+## as a reference for understanding the details of the build process.
+
+all:
+
+.PHONY: clean
+
+clean:
+
+dnl
+dnl Uncomment to include bintools
+dnl
+dnl
+dnl DOCM4_MAKE_BINTOOLS
+
+EOF
+	;;
+
+    README.m4)
+	cat <<EOF > $FILEPATH
+include(docm4.m4)
+
+ Title
+ ==============================
+
+dnl
+dnl Uncomment to include docm4 instructions
+dnl
+dnl DOCM4_INSTRUCTIONS
+
+ Contents
+ ------------------------------
+
+dnl
+dnl Uncomment to include bintools instructions
+dnl 
+dnl DOCM4_BINTOOLS_DOC
+
+EOF
+	;;
+
+    *)
+	touch $FILEPATH
+         	
+esac
+
+tmpfile=$(mktemp)
+$ORIGIN/syseg-reuse -c "$(git config user.name) <$(git config user.email)>" -y "$(date +%Y)" -x  "--template=$template" "$2" $FILEPATH 2> $tmpfile
+if test $? -ne 0; then
+        echo "Falling back to default comment style."
+        $ORIGIN/syseg-reuse -a -c "$(git config user.name) <$(git config user.email)>" -y "$(date +%Y)" -x  "--template=$template --style=python" "$2" $FILEPATH
+fi
+
+if test $? -ne 0; then
+    cat $tmpfile
+    exit $?
+fi
+

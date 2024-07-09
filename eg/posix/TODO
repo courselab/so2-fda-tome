@@ -1,0 +1,29 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+* open O_WRONLY
+       O_CREAT|O_WRONLY
+       O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR    (permission)
+
+* close
+
+* print fd
+
+* low-level descriptors for stdin, stdout, stderr
+
+* write, read
+
+* terminal
+
+* streams, FILE, fopen, fprintf, printf
+
+* redirect 1: close, open, printf (ex. ls)
+
+* redirect 0: scanf, fgets
+
+* named pipe (fifo)
+
+* shell redirect 

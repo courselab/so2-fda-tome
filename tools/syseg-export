@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+function usage()
+{
+    echo "Usage: $(basename $0) [options] <input-file> <output-directory>"
+}
+
+
+function help()
+{
+    usage
+    echo
+    echo "       options:"
+    echo
+    echo "       -h              print this help message and quits"
+    echo "       -v              output version and exit"
+    echo
+}
+
+while getopts "vhf" opt; do
+    case $opt in
+	h)
+	    help
+	    exit 0
+	    ;;
+	v)
+	    cat $ORIGIN/../.version
+	    exit 0
+	    ;;
+	f)
+	    overwrite="y"
+	    ;;
+	*)
+	    usage
+	    exit 1
+	    ;;
+    esac
+done
+shift "$(($OPTIND -1))"
+
+
+FILEPATH=$1
+OUTDIR=$2
+
+if test $# -lt 2 ; then
+    usage
+    exit 1
+fi
+
+if ! test -f $FILEPATH; then
+    echo "File not found: $FILEPATH"
+    exit 1
+fi
+
+OUTPUT="$OUTDIR/$(basename "$FILEPATH")"
+
+if test -f "$OUTPUT" && test "$overwrite" != "y"; then
+    echo "File exists: $OUTPUT. Aborted."
+    echo "Use option -f to force overwrite."
+    exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+ORIGIN=$(dirname "$0")
+
+CONTRIB="$(git config user.name) <$(git config user.email)>"
+
+cp $FILEPATH $OUTPUT
+
+$ORIGIN/syseg-reuse -c "$(git config user.name) <$(git config user.email)>" -y "$(date +%Y)" -x "--template=syseg-export" $OUTPUT
+sed -i "s/<CONTRIBUTOR>/$CONTRIB/" $OUTPUT
+exit 0
+
+

@@ -1,0 +1,5 @@
+define([GCC],[gcc])
+define([GCC_VERSION],[14.1.1])
+define([NO_CF_PROTECT],[-fcf-protection=none])
+define([NAKED],[__attribute__((naked))])
+define([SRC_PATH],[/home/fda-tome/syseg])

@@ -1,0 +1,22 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Invoke the 'clean' rule in each extra_sudir.
+
+clean-local: 
+	for i in $(extra_subdirs); do\
+	  (cd $(srcdir)/$$i && if test -f Makefile; then $(MAKE) clean; fi)\
+	done
+	rm -f $(docm4_files) README
+
+
+# To prevent distribution from containing generated files
+
+dist-hook: 
+	for i in $(extra_subdirs); do\
+	  (cd $(distdir)/$$i && if test -f Makefile ; then $(MAKE) clean; fi)\
+	done
+	rm -f $(docm4_files) README

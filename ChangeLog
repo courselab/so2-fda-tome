@@ -1,0 +1,24 @@
+#    SPDX-FileCopyrightText: 2001 Monaco F. J. <monaco@usp.br>
+#
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+
+	# Changelog
+
+	Notable changes.
+	When applied, this projec uses semantic versioning.
+
+	## Unreleased
+
+	[0.1.0] - 2021-04-06
+
+	### Added
+
+	- Project started
+
+	[0.1.1] - 2021-05-01
+
+	- Full redesign of eg/hw
+

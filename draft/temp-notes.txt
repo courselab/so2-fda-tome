@@ -1,0 +1,35 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+		       readelf -S eg-01.o
+
+
+		       Section Headers:
+		         [Nr] Name              Off    Size   Flg
+			 [ 0]                   000000 000000 
+  			 [ 1] .text             000034 000018 AX
+  			 [ 2] .rel.text         0000f8 000008  I
+  			 [ 3] .data             00004c 000004 WA
+  			 [ 4] .rel.data         000100 000008  I
+  			 [ 5] .bss              000050 000000 WA
+  			 [ 6] .rodata           000050 000004  A
+  			 [ 7] .comment          000054 00002c MS
+  			 [ 8] .note.GNU-stack   000080 000000 
+  			 [ 9] .symtab           000080 000060 
+  			 [10] .strtab           0000e0 000016 
+  			 [11] .shstrtab         000108 000055 
+			 
+                   (some columns were omitted as they are not relevant now)
+
+		   As a side note, the column 'Flg' shows the section flags,
+		   which specify the properties of each section, so the OS can
+		   handle them accordingly. For instance, AX in '.text' means
+		   that the section is loaded into memory (not all sections
+		   are, e.g. .comment), and that it's executable. Contrast with
+		   '.rodata´, which is not executable (the OS will refuse to
+		   execute code from this section. This section is not
+		   writable, differently from '.data' (W), which holds global
+		   variables.

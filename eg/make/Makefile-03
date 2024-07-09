@@ -1,0 +1,54 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Makefile 03 - Split object and header dependences
+
+# Objects
+
+OBJECTS = main.o circle.o rectangle.o square.o
+
+BIN = main
+
+# Default target
+
+all: main
+
+# Binary
+
+$(BIN) : $(OBJECTS)
+	gcc $^ -o $@
+
+# Object-source dependences
+
+main.o : main.c 
+	gcc -I. -c $<
+
+circle.o : circle.c 
+	gcc -I. -c $<
+
+rectangle.o : rectangle.c
+	gcc -I. -c $<
+
+square.o : square.c 
+	gcc -I. -c $<
+
+# Object-header dependences
+
+main.o : circle.h rectangle.h square.h
+circle.o: circle.h
+rectangle.o :
+square.o: rectangle.h
+
+# Cleaning
+
+.PHONY: clean
+
+clean:
+	rm -f $(OBJECTS) $(BIN)
+	rm -f *~ \#*
+
+
+

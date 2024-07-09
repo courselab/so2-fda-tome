@@ -1,0 +1,44 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+## 
+## Init docm4.am
+##
+
+EXTRA_DIST = $(docm4_files) $(docm4_files:%=%.m4) 
+
+# make all docm4 files
+
+all all-local: $(docm4_files)
+
+$(docm4_files) : % : %.m4 $(top_srcdir)/tools/docm4.m4 $(top_srcdir)/tools/bintools.m4 $(top_builddir)/sysegconf.m4 
+	@echo "Creating file $(builddir)/$@ from $<"
+	@m4 --include=$(top_srcdir)/tools --define=_TOOL_PATH=../$(top_srcdir)/tools $< > $(builddir)/$@
+	@$(top_srcdir)/tools/syseg-reuse -y "$(COPYRIGHT_YEAR)" -c "$(COPYRIGHT_NAME) <$(COPYRIGHT_EMAIL)>" -x "--template=syseg-output" $@ > /dev/null  
+
+
+
+# Invoke the 'clean' rule in each extra_sudir.
+
+clean-local: 
+	for i in $(extra_subdirs); do\
+	  (cd $(srcdir)/$$i && if test -f Makefile; then $(MAKE) clean; fi)\
+	done
+	rm -f $(docm4_files) README
+
+
+# To prevent distribution from containing generated files
+
+dist-hook: 
+	for i in $(extra_subdirs); do\
+	  (cd $(distdir)/$$i && if test -f Makefile ; then $(MAKE) clean; fi)\
+	done
+	rm -f $(docm4_files) README
+
+##
+## End docm4.am
+##
+

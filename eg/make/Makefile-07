@@ -1,0 +1,65 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Makefile 07 - Install
+
+# Objects
+
+OBJECTS = main.o circle.o rectangle.o square.o
+
+BIN = main
+
+# Maintainer flags
+
+CPP_FLAGS = -I.
+C_FLAGS = 
+LD_FLAGS =
+CC = gcc
+MAKE = make
+
+# Install prefix
+
+PREFIX=.
+
+# Default target
+
+all: $(BIN)
+
+# Binary
+
+$(BIN) : $(OBJECTS)
+	gcc $(LD_FLAGS) $(LDFLAGS) $^ -o $@
+
+# Pattern rule for object-source dependences
+
+%.o : %.c 
+	$(CC) $(CPP_FLAGS) $(CPPFLAGS) $(C_FLAGS) $(CFLAGS)-c $<
+
+# Automatic object-header dependences
+
+makefiles = $(OBJECTS:%.o=%.d) 
+
+include $(makefiles)
+
+%.d : %.c
+	$(CC) $(CPP_FLAGS) $(CPPFLAGS) -c $<  -MM -MT '$(<:.c=.o) $@' $< >$@
+
+# Cleaning
+
+.PHONY : clean install uninstall
+
+clean:
+	rm -f $(OBJECTS) $(makefiles) $(BIN) 
+	rm -f *~ \#*
+
+# Install
+
+install: all
+	install -d $(PREFIX)/bin 
+	cp $(BIN) $(PREFIX)/bin/
+
+uninstall:
+	rm -f $(PREFIX)/bin/$(BIN)

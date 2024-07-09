@@ -1,0 +1,52 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+ NEWS
+ ==============================
+
+ [1.0.0] - 2024-03-10
+
+ This is an extensive rewrite of former SYSeg.
+
+ Main changes:
+  
+ - REUSE 3.0 compliance with SPDX standard.
+ - Revised build scripts with extended dependency check.
+ - Improved, more detailed, install guide
+ - New code examples and programming exercises.
+ - New code export tools
+
+ Known issues:
+
+ - Provisional use of a custom local install of the reuse-tool.
+ - Tarball distribution does not pass reuse-tool linting.
+ - Some programming exercises need a major revision.
+ - Documentation of the code examples needs revisions.
+
+ ------------------------------
+
+ [0.2.1 ] - 2024-03-10
+
+ Mostly bug fixes (still alpha). 
+
+ ------------------------------
+
+ [0.1.1 ] - 2021-05-10
+
+ Mostly bug fixes (still alpha).
+
+ - Extensive redesign of existing code examples.
+ - Removal of error-prone exercises for future revision.
+ - New code examples and programming exercises.
+ 
+ ------------------------------
+
+ [0.1.0] - 2021-05-01
+
+ Initial, non-stable release. Evertying may change.
+
+ 
+

@@ -1,0 +1,1 @@
+../../eg/bl/boot.ld

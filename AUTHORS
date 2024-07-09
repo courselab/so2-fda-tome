@@ -1,0 +1,27 @@
+#    SPDX-FileCopyrightText: 2001 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: CC-BY-ND-4.0
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+
+  AUTHORS
+  --------------------------------------------------
+
+  SYSeg was written by Dr. Monaco F. J. <monaco@usp.br>..
+
+  You may contact the author at <monaco@.usp.br>
+
+  Acknowledgments
+  ---------------
+
+  It is both a moral obligation and a personal pleasure to acknowledge and
+  express the due gratitude to my colleague and friend Dr. Renê Souza Pinto.
+  His wise advisory and tireless support have been invaluable. If it were not
+  for Renê's outstanding technical skills and readiness to promptly share his
+  knowledge, as well as his resolute willing to dig into obscure coding issues
+  and arcane hardware puzzles, this material would likely have taking much
+  more time to be produced.
+
+  I'd like also to express my gratitude to my students for their feedback,
+  suggestions and source code fixes. 

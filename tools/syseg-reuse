@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+
+function usage()
+{
+    echo "Usage: $(basename $0) [options] <file name>"
+}
+
+
+function help()
+{
+    usage
+    echo
+    echo "       options:"
+    echo
+    echo "       -c              set copyright owner"
+    echo "       -y              set copyright year"
+    echo "       -l              set SPDX-listed license"
+    echo "       -d              downaload licenses"
+    echo "       -x              pass extra options to reuse-tool"
+    echo "       -h              print this help message and quits"
+    echo "       -v              output version and exit"
+    echo "       -L              run REUSE complience check (lint)"
+    echo "       -a              use fallback comment style (hash)"
+    echo
+}
+
+COPYRIGHT="Monaco F. J. <monaco@usp.br>"
+YEAR="2021"
+LICENSE="GPL-3.0-or-later"
+
+##
+## We have observed that reuse-tool fails to detect the project root directory
+## if the directory is not a Git repository (perhaps a bug?) As a workaround
+## we try to infer the root ourselvs and pass it to reuse-tool using the
+## command-line option '--root'
+
+ROOT=$(realpath $(dirname $0)/..)
+
+
+# Where the script is being called from will define the path to the actual
+# reuse tool: if syset-reuse is being called from
+# - the project source tree, call the script in the project source tree;
+# - the local install, call the locally installed srcipt ($HOME/.syseg/bin)
+# - an user-exported project, call the script from the user project
+
+ORIGIN=$(realpath ${BASH_SOURCE%/*})
+
+SRC=$(cat $ORIGIN/../.srcdir 2> /dev/null)
+
+# case $ORIGIN in
+    
+#     "$SRC/tools")		# Calling from source tree"
+# 	REUSE_PATH="$SRC/.local/bin"
+# 	;;
+#
+#     "$HOME/.syseg/bin")		# Calling from install dir
+# 	REUSE_PATH="$ORIGIN"
+# 	;;
+#
+#     *)				# Calling from user project
+# 	REUSE_PATH="$HOME/.syseg/bin"
+# 	;;
+# esac
+
+REUSE_PATH=$HOME/.syseg/bin
+
+if ! test -f "$REUSE_PATH/reuse"; then
+    echo "REUSE helper tool not found at $REUSE_PATH"
+    echo "Please, refer to $SRC/doc/syseg.md".
+   exit 1
+fi
+
+# Process options.
+
+while getopts "hvLdx:y:c:l:a" opt; do
+    case $opt in
+	h)
+	    help
+	    exit 0
+	    ;;
+	v)
+	    cat $ORIGIN/../.version
+	    exit 0
+	    ;;
+	L)
+	    reuse --suppress-deprecation --root=$ROOT lint
+	    exit 0
+	    ;;
+	d)
+	    reuse download --all
+	    exit 0
+	    ;;
+	x)
+	    extra_options="$OPTARG"
+	    ;;
+	y)
+	    YEAR="$OPTARG"
+	    ;;
+	c)
+	    COPYRIGHT="$OPTARG"
+	    ;;
+	l)
+	    LICENSE="$OPTARG"
+	    ;;
+	a)
+	    extra_options+="--style=python"
+	    ;;
+	*)
+	    echo "Unkown option: $OPTARG"
+	    usage
+	    exit 1
+	    ;;
+    esac
+done
+
+shift "$(($OPTIND -1))"
+
+filenames=$*
+
+if test -z "$filenames"; then
+    usage
+    exit 1
+fi
+
+##
+## Call the actual reuse tool.
+##
+
+function do_annotate(){
+    $REUSE_PATH/reuse --root=$ROOT annotate --copyright="$COPYRIGHT" --year="$YEAR" --license="$LICENSE" --template=syseg $1 $extra_options $f > /dev/null
+}
+
+
+for f in $filenames; do
+
+    if test -f "$f"; then	        
+
+	case ${f##*.} in
+	    
+	    c|h|ld)
+		# We prefer C multi-line comments.
+		do_annotate "--multi-line"
+		;;
+
+	    s|S)
+		# We process *.s and *.S sources with GNU Assembler (x86).
+		do_annotate "--style=python"
+		;;
+
+	    am)
+		# Consider Automake input script.
+		do_annotate "--style=python"
+		;;
+
+	    ac)
+		# Consider Autoconf input script.
+		do_annotate "--style=m4"
+		;;
+
+	    hex)
+		# Consider hexadecimal text-file.
+		do_annotate "--force-dot-license"
+		;;
+	    
+	    sh)
+		# Consider shell script.
+		do_annotate "--style=python"
+		;;
+	    
+	    m4)
+		# Consider some special cases of m4 script.
+		case `basename ${f%.*}` in
+		    
+		    README|Makefile)
+			do_annotate  "--template=syseg-docm4"
+			;;
+		    *)
+			do_annotate
+			;;
+		esac
+		;;
+
+	    *)
+		#Some particular files.
+ 		case ${f##*/} in
+		    
+		    README|Makefile|TODO)
+			do_annotate "--style=python"
+			;;
+		    SOLVING)
+			do_annotate "--style=python"
+			;;
+		    *)
+			do_annotate 
+			;;
+		esac
+		# do_annotate
+		;;
+	    
+	esac
+	
+	
+	
+    else
+	echo "File not found: $f... skipping." 
+    fi
+    
+done
+
+

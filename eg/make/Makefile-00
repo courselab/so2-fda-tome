@@ -1,0 +1,30 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Makefile 01 - Trivial makefile.
+
+# Binary 
+
+main : main.o circle.o rectangle.o square.o
+	gcc main.o circle.o rectangle.o square.o -o main
+
+# Objects
+
+main.o : main.c circle.h rectangle.h square.h
+	gcc -I. -c main.c
+
+circle.o : circle.c circle.h
+	gcc -I. -c circle.c
+
+rectangle.o : rectangle.c
+	gcc -I. -c rectangle.c
+
+square.o : square.c rectangle.h
+	gcc -I. -c square.c
+
+
+
+

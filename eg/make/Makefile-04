@@ -1,0 +1,45 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Makefile 04 - Pattern rules.
+
+# Objects
+
+OBJECTS = main.o circle.o rectangle.o square.o
+
+BIN = main
+
+# Default target
+
+all: main
+
+# Binary
+
+$(BIN) : $(OBJECTS)
+	gcc $^ -o $@
+
+# Pattern rule for object-source dependences
+
+%.o : %.c 
+	gcc -I. -c $<
+
+# Object-header dependences
+
+main.o : circle.h rectangle.h square.h
+circle.o: circle.h
+rectangle.o :
+square.o: rectangle.h
+
+# Cleaning
+
+.PHONY: clean
+
+clean:
+	rm -f $(OBJECTS) $(BIN)
+	rm -f *~ \#*
+
+
+

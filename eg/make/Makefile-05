@@ -1,0 +1,48 @@
+#    SPDX-FileCopyrightText: 2021 Monaco F. J. <monaco@usp.br>
+#   
+#    SPDX-License-Identifier: GPL-3.0-or-later
+#
+#    This file is part of SYSeg, available at https://gitlab.com/monaco/syseg.
+
+# Makefile 05 - Automatic header dependences (non-strict POSIX)
+
+# Objects
+
+OBJECTS = main.o circle.o rectangle.o square.o
+
+BIN = main
+
+
+# Default target
+
+all: main
+
+# Binary
+
+$(BIN) : $(OBJECTS)
+	gcc $^ -o $@
+
+# Pattern rule for object-source dependences
+
+%.o : %.c 
+	gcc -I. -c $<
+
+# Automatic object-header dependences
+
+makefiles = $(OBJECTS:%.o=%.d) 
+
+include $(makefiles)
+
+%.d : %.c
+	gcc -I. -MM -MT '$(<:.c=.o) $@' $< >$@
+
+# Cleaning
+
+.PHONY: clean
+
+clean:
+	rm -f  $(OBJECTS) $(BIN)
+	rm -f *~ \#*
+
+
+
